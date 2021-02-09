@@ -87,16 +87,17 @@ fi
 
 # copy and tweak the configuration
 cp configuration/defaults/byron-mainnet/configuration.yaml ${ROOT}/
-sed -i ${ROOT}/configuration.yaml \
+sed -i~ \
     -e 's/Protocol: RealPBFT/Protocol: Cardano/' \
-    -e '/Protocol/ aPBftSignatureThreshold: 0.6' \
+    -e $'/Protocol/ a\\\nPBftSignatureThreshold: 0.6' \
     -e 's/minSeverity: Info/minSeverity: Debug/' \
     -e 's|GenesisFile: genesis.json|ByronGenesisFile: byron/genesis.json|' \
-    -e '/ByronGenesisFile/ aShelleyGenesisFile: shelley/genesis.json' \
-    -e '/ByronGenesisFile/ aAlonzoGenesisFile: shelley/genesis.alonzo.json' \
+    -e $'/ByronGenesisFile/ a\\\nShelleyGenesisFile: shelley/genesis.json' \
+    -e $'/ByronGenesisFile/ a\\\nAlonzoGenesisFile: shelley/genesis.alonzo.json' \
     -e 's/RequiresNoMagic/RequiresMagic/' \
     -e 's/LastKnownBlockVersion-Major: 0/LastKnownBlockVersion-Major: 1/' \
-    -e 's/LastKnownBlockVersion-Minor: 2/LastKnownBlockVersion-Minor: 0/'
+    -e 's/LastKnownBlockVersion-Minor: 2/LastKnownBlockVersion-Minor: 0/' \
+    ${ROOT}/configuration.yaml
 # Options for making it easier to trigger the transition to Shelley
 # If neither of those are used, we have to
 # - post an update proposal + votes to go to protocol version 1
@@ -309,7 +310,7 @@ cardano-cli genesis create --testnet-magic 42 --genesis-dir shelley
 # We're going to use really quick epochs (300 seconds), by using short slots 0.2s
 # and K=10, but we'll keep long KES periods so we don't have to bother
 # cycling KES keys
-sed -i shelley/genesis.spec.json \
+sed -i~ \
     -e 's/"slotLength": 1/"slotLength": 0.2/' \
     -e 's/"activeSlotsCoeff": 5.0e-2/"activeSlotsCoeff": 0.1/' \
     -e 's/"securityParam": 2160/"securityParam": 10/' \
@@ -317,7 +318,8 @@ sed -i shelley/genesis.spec.json \
     -e 's/"maxLovelaceSupply": 0/"maxLovelaceSupply": 1000000000000/' \
     -e 's/"decentralisationParam": 1.0/"decentralisationParam": 0.7/' \
     -e 's/"major": 0/"major": 2/' \
-    -e 's/"updateQuorum": 5/"updateQuorum": 2/'
+    -e 's/"updateQuorum": 5/"updateQuorum": 2/' \
+    shelley/genesis.spec.json
 
 # Now generate for real:
 
@@ -614,8 +616,9 @@ if [ "$1" = "alonzo" ]; then
   echo "TestEnableDevelopmentHardForkEras: True" >> ${ROOT}/configuration.yaml
   echo "TestEnableDevelopmentNetworkProtocols: True" >> ${ROOT}/configuration.yaml
 
-  sed -i ${ROOT}/configuration.yaml \
-      -e 's/LastKnownBlockVersion-Major: 1/LastKnownBlockVersion-Major: 5/'
+  sed -i~ \
+      -e 's/LastKnownBlockVersion-Major: 1/LastKnownBlockVersion-Major: 5/' \
+      ${ROOT}/configuration.yaml
 
   # Copy the cost model
   mkdir ${ROOT}/shelley/alonzo
@@ -626,21 +629,24 @@ elif [ "$1" = "mary" ]; then
   echo "TestShelleyHardForkAtEpoch: 0"  >> ${ROOT}/configuration.yaml
   echo "TestAllegraHardForkAtEpoch: 0"  >> ${ROOT}/configuration.yaml
   echo "TestMaryHardForkAtEpoch: 0"  >> ${ROOT}/configuration.yaml
-  sed -i ${ROOT}/configuration.yaml \
-      -e 's/LastKnownBlockVersion-Major: 1/LastKnownBlockVersion-Major: 4/'
+  sed -i~ \
+      -e 's/LastKnownBlockVersion-Major: 1/LastKnownBlockVersion-Major: 4/' \
+      ${ROOT}/configuration.yaml
   echo "Nodes will start in Mary era from epoch 0"
 
 elif [ "$1" = "allegra" ]; then
   echo "TestShelleyHardForkAtEpoch: 0"  >> ${ROOT}/configuration.yaml
   echo "TestAllegraHardForkAtEpoch: 0"  >> ${ROOT}/configuration.yaml
-  sed -i ${ROOT}/configuration.yaml \
-      -e 's/LastKnownBlockVersion-Major: 1/LastKnownBlockVersion-Major: 3/'
+  sed -i~ \
+      -e 's/LastKnownBlockVersion-Major: 1/LastKnownBlockVersion-Major: 3/' \
+      ${ROOT}/configuration.yaml
   echo "Nodes will start in Allegra era from epoch 0"
 
 elif [ "$1" = "shelley" ]; then
   echo "TestShelleyHardForkAtEpoch: 0"  >> ${ROOT}/configuration.yaml
-  sed -i ${ROOT}/configuration.yaml \
-      -e 's/LastKnownBlockVersion-Major: 1/LastKnownBlockVersion-Major: 2/'
+  sed -i~ \
+      -e 's/LastKnownBlockVersion-Major: 1/LastKnownBlockVersion-Major: 2/' \
+      ${ROOT}/configuration.yaml
   echo "Nodes will start in Shelley era from epoch 0"
 
 else
