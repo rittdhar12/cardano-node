@@ -38,20 +38,22 @@ jobs:
       run: |
         echo "BASH_PATH=$(cd $(dirname $(which bash)); pwd -W)/bash.exe" >> $GITHUB_ENV
 
-    - uses: haskell/actions/setup@v1.2
-      id: setup-haskell
-      with:
-        ghcup: 0.1.16.2
-
     - name: Install Haskell tooling
       run: |
-        ls C:/ghcup/bin
-        ghcup install ghc   ${{ matrix.ghc }}
-        ghcup set     ghc   ${{ matrix.ghc }}
-        ghcup install cabal ${{ matrix.cabal }}
-        ghcup set     cabal ${{ matrix.cabal }}
+        C:/ghcup/bin/ghcup upgrade
+        C:/ghcup/bin/ghcup install ghc   ${{ matrix.ghc }}
+        C:/ghcup/bin/ghcup set     ghc   ${{ matrix.ghc }}
+        C:/ghcup/bin/ghcup install cabal ${{ matrix.cabal }}
+        C:/ghcup/bin/ghcup set     cabal ${{ matrix.cabal }}
         cabal --version
         ghc --version
+
+    - name: Environment
+      run: env
+
+    - name: Environment
+      run: |
+        ls C:/cabal
 
     - name: Set cache version
       run: echo "CACHE_VERSION=grFfw8r" >> $GITHUB_ENV
