@@ -113,7 +113,8 @@ test-suite cardano-testnet-tests
                       , text
                       , unordered-containers
 
-  other-modules:        Spec.Plutus.Direct.ScriptContextEquality
+  other-modules:        Spec.Plutus.Direct.CertifyingPlutus
+                        Spec.Plutus.Direct.ScriptContextEquality
                         Spec.Plutus.Direct.ScriptContextEqualityMint
                         Spec.Plutus.Direct.TxInLockingPlutus
                         Spec.Plutus.Script.TxInLockingPlutus

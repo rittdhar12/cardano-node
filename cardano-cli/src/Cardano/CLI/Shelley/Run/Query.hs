@@ -12,7 +12,8 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Cardano.CLI.Shelley.Run.Query
-  ( ShelleyQueryCmdError
+  ( DelegationsAndRewards(..)
+  , ShelleyQueryCmdError
   , ShelleyQueryCmdLocalStateQueryError (..)
   , renderShelleyQueryCmdError
   , renderLocalStateQueryError
@@ -35,6 +36,9 @@ import           Cardano.Crypto.Hash (hashToBytesAsHex)
 import           Cardano.Ledger.Coin
 import           Cardano.Ledger.Crypto (StandardCrypto)
 import           Cardano.Ledger.Keys (KeyHash (..), KeyRole (..))
+import           Cardano.Ledger.Shelley.EpochBoundary
+import           Cardano.Ledger.Shelley.LedgerState hiding (_delegations)
+import           Cardano.Ledger.Shelley.Scripts ()
 import           Cardano.Prelude hiding (atomically)
 import           Control.Monad.Trans.Except (except)
 import           Control.Monad.Trans.Except.Extra (firstExceptT, handleIOExceptT, hoistMaybe, left)
@@ -49,14 +53,12 @@ import           Ouroboros.Consensus.Cardano.Block as Consensus (EraMismatch (..
 import           Ouroboros.Network.Block (Serialised (..))
 import           Ouroboros.Network.Protocol.LocalStateQuery.Type (AcquireFailure (..))
 import           Prelude (String, id)
-import           Cardano.Ledger.Shelley.EpochBoundary
-import           Cardano.Ledger.Shelley.LedgerState hiding (_delegations)
-import           Cardano.Ledger.Shelley.Scripts ()
 import           Text.Printf (printf)
 
 import qualified Cardano.CLI.Shelley.Output as O
 import qualified Cardano.Ledger.Crypto as Crypto
 import qualified Cardano.Ledger.Era as Era
+import qualified Cardano.Ledger.Shelley.API.Protocol as Ledger
 import qualified Cardano.Ledger.Shelley.Constraints as Ledger
 import qualified Data.Aeson as Aeson
 import qualified Data.ByteString.Lazy.Char8 as LBS
@@ -69,7 +71,6 @@ import qualified Data.Text.IO as Text
 import qualified Data.Vector as Vector
 import qualified Ouroboros.Consensus.HardFork.History.Qry as Qry
 import qualified Ouroboros.Network.Protocol.LocalStateQuery.Type as LocalStateQuery
-import qualified Cardano.Ledger.Shelley.API.Protocol as Ledger
 import qualified System.IO as IO
 
 {- HLINT ignore "Reduce duplication" -}
