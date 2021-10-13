@@ -21,8 +21,6 @@ data AcceptorConfiguration lo = AcceptorConfiguration
     acceptorTracer    :: !(Tracer IO (TraceSendRecv (DataPointForward lo)))
     -- | The endpoint that will be used to listen to the forwarder.
   , forwarderEndpoint :: !HowToConnect
-    -- | The request specifies how many 'TraceObject's will be requested.
-  , whatToRequest     :: !NumberOfTraceObjects
     -- | 'TVar' that can be used as a brake: if an external thread sets
     --   it to 'True', the acceptor will send 'MsgDone' message to the
     --   forwarder and their session will be closed.

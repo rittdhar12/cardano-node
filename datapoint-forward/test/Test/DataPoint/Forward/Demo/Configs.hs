@@ -19,7 +19,6 @@ mkAcceptorConfig ep weAreDone =
   AcceptorConfiguration
     { acceptorTracer    = nullTracer
     , forwarderEndpoint = ep
-    , whatToRequest     = NumberOfTraceObjects 10
     , shouldWeStop      = weAreDone
     }
 

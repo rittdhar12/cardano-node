@@ -49,7 +49,6 @@ import           Ouroboros.Network.Util.ShowProxy (ShowProxy(..))
 import qualified DataPoint.Forward.Protocol.Acceptor as Acceptor
 import qualified DataPoint.Forward.Protocol.Codec as Acceptor
 import           DataPoint.Forward.Protocol.Type
-import           DataPoint.Forward.Queue (getTraceObjects)
 import           DataPoint.Forward.Configuration (AcceptorConfiguration (..), HowToConnect (..))
 
 listenToForwarder
@@ -150,9 +149,9 @@ acceptorActions
   => AcceptorConfiguration lo -- ^ Acceptor's configuration.
   -> ([lo] -> IO ())          -- ^ The handler for accepted 'TraceObject's.
   -> Acceptor.TraceAcceptor lo IO ()
-acceptorActions config@AcceptorConfiguration{whatToRequest, shouldWeStop} loHandler =
-  Acceptor.SendMsgTraceObjectsRequest TokBlocking whatToRequest $ \replyWithTraceObjects -> do
-    loHandler $ getTraceObjects replyWithTraceObjects
+acceptorActions config@AcceptorConfiguration{shouldWeStop} loHandler =
+  Acceptor.SendMsgTraceObjectsRequest [] $ \replyWithTraceObjects -> do
+    loHandler replyWithTraceObjects
     checkIfWeShouldStop
  where
   checkIfWeShouldStop =

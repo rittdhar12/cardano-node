@@ -14,6 +14,8 @@ module DataPoint.Forward.Protocol.Acceptor
   , traceAcceptorPeer
   ) where
 
+import           Data.Text (Text)
+
 import           Network.TypedProtocol.Core (Peer (..), PeerHasAgency (..),
                                              PeerRole (..))
 
@@ -21,9 +23,8 @@ import           DataPoint.Forward.Protocol.Type
 
 data TraceAcceptor lo m a where
   SendMsgTraceObjectsRequest
-    :: TokBlockingStyle blocking
-    -> NumberOfTraceObjects
-    -> (BlockingReplyList blocking lo -> m (TraceAcceptor lo m a))
+    :: [Text]
+    -> ([lo] -> m (TraceAcceptor lo m a))
     -> TraceAcceptor lo m a
 
   SendMsgDone
@@ -37,22 +38,13 @@ traceAcceptorPeer
   => TraceAcceptor lo m a
   -> Peer (DataPointForward lo) 'AsClient 'StIdle m a
 traceAcceptorPeer = \case
-  SendMsgTraceObjectsRequest TokBlocking request next ->
+  SendMsgTraceObjectsRequest request next ->
     -- Send our message (request for new 'TraceObject's from the forwarder).
-    Yield (ClientAgency TokIdle) (MsgTraceObjectsRequest TokBlocking request) $
-      -- We're now into the 'StBusy' state, and now we'll wait for a reply
-      -- from the forwarder.
-      Await (ServerAgency (TokBusy TokBlocking)) $ \(MsgTraceObjectsReply reply) ->
-        Effect $
-          traceAcceptorPeer <$> next reply
-
-  SendMsgTraceObjectsRequest TokNonBlocking request next ->
-    -- Send our message (request for new 'TraceObject's from the forwarder).
-    Yield (ClientAgency TokIdle) (MsgTraceObjectsRequest TokNonBlocking request) $
+    Yield (ClientAgency TokIdle) (MsgTraceObjectsRequest request) $
       -- We're now into the 'StBusy' state, and now we'll wait for a reply
       -- from the forwarder. It is assuming that the forwarder will reply
       -- immediately (even there are no 'TraceObject's).
-      Await (ServerAgency (TokBusy TokNonBlocking)) $ \(MsgTraceObjectsReply reply) ->
+      Await (ServerAgency TokBusy) $ \(MsgTraceObjectsReply reply) ->
         Effect $
           traceAcceptorPeer <$> next reply
 

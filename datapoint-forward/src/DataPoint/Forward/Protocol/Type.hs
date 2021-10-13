@@ -15,18 +15,16 @@
 
 module DataPoint.Forward.Protocol.Type
   ( DataPointForward (..)
-  , TokBlockingStyle (..)
   , Message (..)
   , ClientHasAgency (..)
   , ServerHasAgency (..)
   , NobodyHasAgency (..)
-  , NumberOfTraceObjects (..)
-  , BlockingReplyList (..)
   ) where
 
 import           Codec.Serialise (Serialise (..))
 import           Data.List.NonEmpty (NonEmpty)
 import           Data.Proxy (Proxy(..))
+import           Data.Text (Text)
 import           Data.Word (Word16)
 import           GHC.Generics (Generic)
 import           Network.TypedProtocol.Core (Protocol (..))
@@ -47,32 +45,17 @@ import           Ouroboros.Network.Util.ShowProxy (ShowProxy(..))
 --    After the connection is established, the acceptor asks for 'TraceObject's,
 --    the forwarder replies to it.
 
--- | The acceptor will send this request to the forwarder.
-newtype NumberOfTraceObjects = NumberOfTraceObjects
-  { nTraceObjects :: Word16
-  } deriving (Eq, Generic, Show)
-
-instance ShowProxy NumberOfTraceObjects
-instance Serialise NumberOfTraceObjects
-
 data DataPointForward lo where
 
   -- | Both acceptor and forwarder are in idle state. The acceptor can send a
-  -- request for node's info ('MsgNodeInfoRequest') OR a request  for a list
-  -- of 'TraceObject's ('MsgTraceObjectsRequest'); the forwarder is waiting for a request.
-  -- It will replay either with 'MsgNodeInfoReply' or 'MsgTraceObjectsReply'.
-  --
-  -- Node's info is an important information about the node, such as
-  -- its protocol, version, start time, etc. It is assuming that the node
-  -- must provide this information.
+  -- request  for a list of 'TraceObject's ('MsgTraceObjectsRequest');
+  -- the forwarder is waiting for a request, it will replay with 'MsgTraceObjectsReply'.
   StIdle :: DataPointForward lo
 
   -- | The acceptor has sent a next request for 'TraceObject's. The acceptor is
   -- now waiting for a reply, and the forwarder is busy getting ready to send a
   -- reply with new list of 'TraceObject's.
-  --
-  -- There are two sub-states for this, for blocking and non-blocking cases.
-  StBusy :: StBlockingStyle -> DataPointForward lo
+  StBusy :: DataPointForward lo
 
   -- | Both the acceptor and forwarder are in the terminal state. They're done.
   StDone :: DataPointForward lo
@@ -85,34 +68,6 @@ instance (ShowProxy lo)
     , ")"
     ]
 
-data StBlockingStyle where
-  -- | In this sub-state the reply need not be prompt. There is no timeout.
-  StBlocking    :: StBlockingStyle
-  -- | In this sub-state the peer must reply. There is a timeout.
-  StNonBlocking :: StBlockingStyle
-
--- | The value level equivalent of 'StBlockingStyle'.
---
--- This is also used in 'MsgTraceObjectsRequest' where it is interpreted (and can be encoded)
--- as a 'Bool' with 'True' for blocking, and 'False' for non-blocking.
-data TokBlockingStyle (k :: StBlockingStyle) where
-  TokBlocking    :: TokBlockingStyle 'StBlocking
-  TokNonBlocking :: TokBlockingStyle 'StNonBlocking
-
-deriving instance Eq   (TokBlockingStyle b)
-deriving instance Show (TokBlockingStyle b)
-
--- | We have requests for lists of things. In the blocking case the
--- corresponding reply must be non-empty, whereas in the non-blocking case
--- an empty reply is fine.
---
-data BlockingReplyList (blocking :: StBlockingStyle) lo where
-  BlockingReply    :: NonEmpty lo  -> BlockingReplyList 'StBlocking    lo
-  NonBlockingReply ::         [lo] -> BlockingReplyList 'StNonBlocking lo
-
-deriving instance Eq   lo => Eq   (BlockingReplyList blocking lo)
-deriving instance Show lo => Show (BlockingReplyList blocking lo)
-
 instance Protocol (DataPointForward lo) where
 
   -- | The messages in the trace forwarding/accepting protocol.
@@ -120,24 +75,15 @@ instance Protocol (DataPointForward lo) where
   data Message (DataPointForward lo) from to where
     -- | Request the list of 'TraceObject's from the forwarder.
     --   State: Idle -> Busy.
-    --
-    -- With 'TokBlocking' this is a a blocking operation: the reply will
-    -- always have at least one 'TraceObject', and it does not expect a prompt
-    -- reply: there is no timeout. This covers the case when there
-    -- is nothing else to do but wait.
-    --
-    -- With 'TokNonBlocking' this is a non-blocking operation: the reply
-    -- may be an empty list and this does expect a prompt reply.
     MsgTraceObjectsRequest
-      :: TokBlockingStyle blocking
-      -> NumberOfTraceObjects
-      -> Message (DataPointForward lo) 'StIdle ('StBusy blocking)
+      :: [Text]
+      -> Message (DataPointForward lo) 'StIdle 'StBusy
 
     -- | Reply with a list of 'TraceObject's for the acceptor.
     -- State: Busy -> Idle.
     MsgTraceObjectsReply
-      :: BlockingReplyList blocking lo
-      -> Message (DataPointForward lo) ('StBusy blocking) 'StIdle
+      :: [lo]
+      -> Message (DataPointForward lo) 'StBusy 'StIdle
 
     -- | Terminating message. State: Idle -> Done.
     MsgDone
@@ -159,7 +105,7 @@ instance Protocol (DataPointForward lo) where
     TokIdle :: ClientHasAgency 'StIdle
 
   data ServerHasAgency st where
-    TokBusy :: TokBlockingStyle blocking -> ServerHasAgency ('StBusy blocking)
+    TokBusy :: ServerHasAgency 'StBusy
 
   data NobodyHasAgency st where
     TokDone :: NobodyHasAgency 'StDone

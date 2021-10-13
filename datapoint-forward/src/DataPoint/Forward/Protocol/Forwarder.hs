@@ -9,6 +9,8 @@ module DataPoint.Forward.Protocol.Forwarder
   , traceForwarderPeer
   ) where
 
+import           Data.Text (Text)
+
 import           Network.TypedProtocol.Core (Peer (..), PeerHasAgency (..),
                                              PeerRole (..))
 
@@ -17,10 +19,8 @@ import           DataPoint.Forward.Protocol.Type
 data DataPointForwarder lo m a = DataPointForwarder
   { -- | The acceptor sent us a request for new 'TraceObject's.
     recvMsgTraceObjectsRequest
-      :: forall blocking.
-         TokBlockingStyle blocking
-      -> NumberOfTraceObjects
-      -> m (BlockingReplyList blocking lo, DataPointForwarder lo m a)
+      :: [Text]
+      -> m ([lo], DataPointForwarder lo m a)
 
     -- | The acceptor terminated. Here we have a pure return value, but we
     -- could have done another action in 'm' if we wanted to.
@@ -40,9 +40,9 @@ traceForwarderPeer DataPointForwarder{recvMsgTraceObjectsRequest, recvMsgDone} =
     -- The acceptor sent us a request for new 'TraceObject's, so now we're
     -- in the 'StBusy' state which means it's the forwarder's turn to send
     -- a reply.
-    MsgTraceObjectsRequest blocking request -> Effect $ do
-      (reply, next) <- recvMsgTraceObjectsRequest blocking request
-      return $ Yield (ServerAgency (TokBusy blocking))
+    MsgTraceObjectsRequest request -> Effect $ do
+      (reply, next) <- recvMsgTraceObjectsRequest request
+      return $ Yield (ServerAgency TokBusy)
                      (MsgTraceObjectsReply reply)
                      (traceForwarderPeer next)
 

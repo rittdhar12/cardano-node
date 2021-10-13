@@ -4,7 +4,6 @@
 
 module DataPoint.Forward.Queue
   ( readItems
-  , getTraceObjects
   ) where
 
 import           Control.Concurrent.STM (STM, atomically, retry)
@@ -25,21 +24,11 @@ readItems
   -> Forwarder.DataPointForwarder lo IO ()
 readItems config sink@ForwardSink{forwardQueue, wasUsed} =
   Forwarder.DataPointForwarder
-    { Forwarder.recvMsgTraceObjectsRequest = \blocking (NumberOfTraceObjects n) -> do
-        replyList <-
-          case blocking of
-            TokBlocking -> do
-              objs <- atomically $ getNTraceObjects n forwardQueue >>= \case
-                []     -> retry -- No 'TraceObject's yet, just wait...
-                (x:xs) -> return $ x NE.:| xs
-              atomically . modifyTVar' wasUsed . const $ True
-              return $ BlockingReply objs
-            TokNonBlocking -> do
-              objs <- atomically $ getNTraceObjects n forwardQueue
-              unless (null objs) $
-                atomically . modifyTVar' wasUsed . const $ True
-              return $ NonBlockingReply objs
-        return (replyList, readItems config sink)
+    { Forwarder.recvMsgTraceObjectsRequest = \dpNames -> do
+        objs <- atomically $ getNTraceObjects 1 forwardQueue
+        unless (null objs) $
+          atomically . modifyTVar' wasUsed . const $ True
+        return (objs, readItems config sink)
     , Forwarder.recvMsgDone = return ()
     }
 
@@ -53,9 +42,3 @@ getNTraceObjects n q =
   readTVar q >>= tryReadTBQueue >>= \case
     Just lo' -> (lo' :) <$> getNTraceObjects (n - 1) q
     Nothing  -> return []
-
-getTraceObjects
-  :: BlockingReplyList blocking lo -- ^ The reply with list of 'TraceObject's.
-  -> [lo]
-getTraceObjects (BlockingReply neList)  = NE.toList neList
-getTraceObjects (NonBlockingReply list) = list
