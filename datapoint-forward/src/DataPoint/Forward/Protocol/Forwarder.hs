@@ -1,0 +1,51 @@
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE NamedFieldPuns #-}
+
+module DataPoint.Forward.Protocol.Forwarder
+  ( TraceForwarder (..)
+  , traceForwarderPeer
+  ) where
+
+import           Network.TypedProtocol.Core (Peer (..), PeerHasAgency (..),
+                                             PeerRole (..))
+
+import           DataPoint.Forward.Protocol.Type
+
+data TraceForwarder lo m a = TraceForwarder
+  { -- | The acceptor sent us a request for new 'TraceObject's.
+    recvMsgTraceObjectsRequest
+      :: forall blocking.
+         TokBlockingStyle blocking
+      -> NumberOfTraceObjects
+      -> m (BlockingReplyList blocking lo, TraceForwarder lo m a)
+
+    -- | The acceptor terminated. Here we have a pure return value, but we
+    -- could have done another action in 'm' if we wanted to.
+  , recvMsgDone :: m a
+  }
+
+-- | Interpret a particular action sequence into the server side of the protocol.
+--
+traceForwarderPeer
+  :: Monad m
+  => TraceForwarder lo m a
+  -> Peer (TraceForward lo) 'AsServer 'StIdle m a
+traceForwarderPeer TraceForwarder{recvMsgTraceObjectsRequest, recvMsgDone} =
+  -- In the 'StIdle' state the forwarder is awaiting a request message
+  -- from the acceptor.
+  Await (ClientAgency TokIdle) $ \case
+    -- The acceptor sent us a request for new 'TraceObject's, so now we're
+    -- in the 'StBusy' state which means it's the forwarder's turn to send
+    -- a reply.
+    MsgTraceObjectsRequest blocking request -> Effect $ do
+      (reply, next) <- recvMsgTraceObjectsRequest blocking request
+      return $ Yield (ServerAgency (TokBusy blocking))
+                     (MsgTraceObjectsReply reply)
+                     (traceForwarderPeer next)
+
+    -- The acceptor sent the done transition, so we're in the 'StDone' state
+    -- so all we can do is stop using 'done', with a return value.
+    MsgDone -> Effect $ Done TokDone <$> recvMsgDone
