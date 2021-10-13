@@ -22,9 +22,9 @@ import           DataPoint.Forward.Utils
 readItems
   :: ForwarderConfiguration lo -- ^ The forwarder configuration.
   -> ForwardSink lo            -- ^ The sink contains the queue we read 'TraceObject's from.
-  -> Forwarder.TraceForwarder lo IO ()
+  -> Forwarder.DataPointForwarder lo IO ()
 readItems config sink@ForwardSink{forwardQueue, wasUsed} =
-  Forwarder.TraceForwarder
+  Forwarder.DataPointForwarder
     { Forwarder.recvMsgTraceObjectsRequest = \blocking (NumberOfTraceObjects n) -> do
         replyList <-
           case blocking of

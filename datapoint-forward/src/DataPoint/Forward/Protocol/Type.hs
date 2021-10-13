@@ -14,7 +14,7 @@
 -- definition of the protocol: what is allowed and what is not allowed.
 
 module DataPoint.Forward.Protocol.Type
-  ( TraceForward (..)
+  ( DataPointForward (..)
   , TokBlockingStyle (..)
   , Message (..)
   , ClientHasAgency (..)
@@ -55,7 +55,7 @@ newtype NumberOfTraceObjects = NumberOfTraceObjects
 instance ShowProxy NumberOfTraceObjects
 instance Serialise NumberOfTraceObjects
 
-data TraceForward lo where
+data DataPointForward lo where
 
   -- | Both acceptor and forwarder are in idle state. The acceptor can send a
   -- request for node's info ('MsgNodeInfoRequest') OR a request  for a list
@@ -65,22 +65,22 @@ data TraceForward lo where
   -- Node's info is an important information about the node, such as
   -- its protocol, version, start time, etc. It is assuming that the node
   -- must provide this information.
-  StIdle :: TraceForward lo
+  StIdle :: DataPointForward lo
 
   -- | The acceptor has sent a next request for 'TraceObject's. The acceptor is
   -- now waiting for a reply, and the forwarder is busy getting ready to send a
   -- reply with new list of 'TraceObject's.
   --
   -- There are two sub-states for this, for blocking and non-blocking cases.
-  StBusy :: StBlockingStyle -> TraceForward lo
+  StBusy :: StBlockingStyle -> DataPointForward lo
 
   -- | Both the acceptor and forwarder are in the terminal state. They're done.
-  StDone :: TraceForward lo
+  StDone :: DataPointForward lo
 
 instance (ShowProxy lo)
-      => ShowProxy (TraceForward lo) where
+      => ShowProxy (DataPointForward lo) where
   showProxy _ = concat
-    [ "TraceForward ("
+    [ "DataPointForward ("
     , showProxy (Proxy :: Proxy lo)
     , ")"
     ]
@@ -113,11 +113,11 @@ data BlockingReplyList (blocking :: StBlockingStyle) lo where
 deriving instance Eq   lo => Eq   (BlockingReplyList blocking lo)
 deriving instance Show lo => Show (BlockingReplyList blocking lo)
 
-instance Protocol (TraceForward lo) where
+instance Protocol (DataPointForward lo) where
 
   -- | The messages in the trace forwarding/accepting protocol.
   --
-  data Message (TraceForward lo) from to where
+  data Message (DataPointForward lo) from to where
     -- | Request the list of 'TraceObject's from the forwarder.
     --   State: Idle -> Busy.
     --
@@ -131,17 +131,17 @@ instance Protocol (TraceForward lo) where
     MsgTraceObjectsRequest
       :: TokBlockingStyle blocking
       -> NumberOfTraceObjects
-      -> Message (TraceForward lo) 'StIdle ('StBusy blocking)
+      -> Message (DataPointForward lo) 'StIdle ('StBusy blocking)
 
     -- | Reply with a list of 'TraceObject's for the acceptor.
     -- State: Busy -> Idle.
     MsgTraceObjectsReply
       :: BlockingReplyList blocking lo
-      -> Message (TraceForward lo) ('StBusy blocking) 'StIdle
+      -> Message (DataPointForward lo) ('StBusy blocking) 'StIdle
 
     -- | Terminating message. State: Idle -> Done.
     MsgDone
-      :: Message (TraceForward lo) 'StIdle 'StDone
+      :: Message (DataPointForward lo) 'StIdle 'StDone
 
   -- | This is an explanation of our states, in terms of which party has agency
   -- in each state.
@@ -170,13 +170,13 @@ instance Protocol (TraceForward lo) where
   exclusionLemma_NobodyAndServerHaveAgency TokDone tok = case tok of {}
 
 instance Show lo
-      => Show (Message (TraceForward lo) from to) where
+      => Show (Message (DataPointForward lo) from to) where
   show MsgTraceObjectsRequest{} = "MsgTraceObjectsRequest"
   show MsgTraceObjectsReply{}   = "MsgTraceObjectsReply"
   show MsgDone{}                = "MsgDone"
 
-instance Show (ClientHasAgency (st :: TraceForward lo)) where
+instance Show (ClientHasAgency (st :: DataPointForward lo)) where
   show TokIdle = "TokIdle"
 
-instance Show (ServerHasAgency (st :: TraceForward lo)) where
+instance Show (ServerHasAgency (st :: DataPointForward lo)) where
   show TokBusy{} = "TokBusy"

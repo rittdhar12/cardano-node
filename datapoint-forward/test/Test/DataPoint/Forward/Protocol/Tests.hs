@@ -17,12 +17,12 @@ import           Test.DataPoint.Forward.Protocol.TraceItem
 
 tests :: TestTree
 tests = testGroup "DataPoint.Forward.Protocol"
-  [ testProperty "codec" prop_codec_TraceForward
+  [ testProperty "codec" prop_codec_DataPointForward
   ]
 
-prop_codec_TraceForward :: AnyMessageAndAgency (TraceForward TraceItem) -> Bool
-prop_codec_TraceForward msg =
+prop_codec_DataPointForward :: AnyMessageAndAgency (DataPointForward TraceItem) -> Bool
+prop_codec_DataPointForward msg =
   runST $ prop_codecM
-          (codecTraceForward CBOR.encode CBOR.decode
-                             CBOR.encode CBOR.decode)
+          (codecDataPointForward CBOR.encode CBOR.decode
+                                 CBOR.encode CBOR.decode)
           msg

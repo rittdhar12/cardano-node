@@ -18,7 +18,7 @@ newtype HowToConnect = LocalPipe FilePath
 -- | Acceptor configuration, parameterized by trace item's type.
 data AcceptorConfiguration lo = AcceptorConfiguration
   { -- | The tracer that will be used by the acceptor in its network layer.
-    acceptorTracer    :: !(Tracer IO (TraceSendRecv (TraceForward lo)))
+    acceptorTracer    :: !(Tracer IO (TraceSendRecv (DataPointForward lo)))
     -- | The endpoint that will be used to listen to the forwarder.
   , forwarderEndpoint :: !HowToConnect
     -- | The request specifies how many 'TraceObject's will be requested.
@@ -32,7 +32,7 @@ data AcceptorConfiguration lo = AcceptorConfiguration
 -- | Forwarder configuration, parameterized by trace item's type.
 data ForwarderConfiguration lo = ForwarderConfiguration
   { -- | The tracer that will be used by the forwarder in its network layer.
-    forwarderTracer :: !(Tracer IO (TraceSendRecv (TraceForward lo)))
+    forwarderTracer :: !(Tracer IO (TraceSendRecv (DataPointForward lo)))
     -- | The endpoint that will be used to connect to the acceptor.
   , acceptorEndpoint :: !HowToConnect
     -- | The big size of internal queue for tracing items. We use it in

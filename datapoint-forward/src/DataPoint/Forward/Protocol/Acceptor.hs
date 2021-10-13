@@ -35,7 +35,7 @@ data TraceAcceptor lo m a where
 traceAcceptorPeer
   :: Monad m
   => TraceAcceptor lo m a
-  -> Peer (TraceForward lo) 'AsClient 'StIdle m a
+  -> Peer (DataPointForward lo) 'AsClient 'StIdle m a
 traceAcceptorPeer = \case
   SendMsgTraceObjectsRequest TokBlocking request next ->
     -- Send our message (request for new 'TraceObject's from the forwarder).

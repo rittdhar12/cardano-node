@@ -92,8 +92,8 @@ forwardTraceObjects config sink =
     MuxPeerRaw $ \channel ->
       runPeer
         (forwarderTracer config)
-        (Forwarder.codecTraceForward CBOR.encode CBOR.decode
-                                     CBOR.encode CBOR.decode)
+        (Forwarder.codecDataPointForward CBOR.encode CBOR.decode
+                                         CBOR.encode CBOR.decode)
         channel
         (Forwarder.traceForwarderPeer $ readItems config sink)
 
@@ -108,7 +108,7 @@ forwardTraceObjectsResp config sink =
     MuxPeerRaw $ \channel ->
       runPeer
         (forwarderTracer config)
-        (Forwarder.codecTraceForward CBOR.encode CBOR.decode
-                                     CBOR.encode CBOR.decode)
+        (Forwarder.codecDataPointForward CBOR.encode CBOR.decode
+                                         CBOR.encode CBOR.decode)
         channel
         (Forwarder.traceForwarderPeer $ readItems config sink)

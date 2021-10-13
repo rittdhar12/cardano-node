@@ -121,8 +121,8 @@ acceptTraceObjects config loHandler =
         15_000 -- 15sec
         $ runPeer
             (acceptorTracer config)
-            (Acceptor.codecTraceForward CBOR.encode CBOR.decode
-                                        CBOR.encode CBOR.decode)
+            (Acceptor.codecDataPointForward CBOR.encode CBOR.decode
+                                            CBOR.encode CBOR.decode)
             channel
             (Acceptor.traceAcceptorPeer $ acceptorActions config loHandler)
 
@@ -138,7 +138,7 @@ acceptTraceObjectsInit config loHandler =
     MuxPeerRaw $ \channel ->
       runPeer
         (acceptorTracer config)
-        (Acceptor.codecTraceForward CBOR.encode CBOR.decode
+        (Acceptor.codecDataPointForward CBOR.encode CBOR.decode
                                     CBOR.encode CBOR.decode)
         channel
         (Acceptor.traceAcceptorPeer $ acceptorActions config loHandler)

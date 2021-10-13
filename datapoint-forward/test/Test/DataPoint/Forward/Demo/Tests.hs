@@ -53,7 +53,7 @@ prop_RemoteSocket n = ioProperty . withIOManager $ \iomgr -> do
                (mkAcceptorConfig ep weAreDone)
                (traceItemsHandler acceptedItems)) $ \_ -> do
     sleep 0.5
-    withAsync (runTraceForwarder iomgr forwarderConfig sink) $ \_ -> do
+    withAsync (runDataPointForwarder iomgr forwarderConfig sink) $ \_ -> do
       mapM_ (writeToSink sink) itemsToForward
       -- Just wait till the acceptor will ask and receive all 'TraceItem's from the forwarder.
       waitForFinish acceptedItems n weAreDone

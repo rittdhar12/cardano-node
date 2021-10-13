@@ -5,7 +5,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module DataPoint.Forward.Protocol.Codec (
-  codecTraceForward
+  codecDataPointForward
   ) where
 
 import qualified Codec.CBOR.Decoding as CBOR
@@ -21,26 +21,26 @@ import           Ouroboros.Network.Codec (Codec, PeerHasAgency (..),
 
 import           DataPoint.Forward.Protocol.Type
 
-codecTraceForward
+codecDataPointForward
   :: forall lo m.
      MonadST m
   => (NumberOfTraceObjects -> CBOR.Encoding)          -- ^ Encoder for 'Request'.
   -> (forall s . CBOR.Decoder s NumberOfTraceObjects) -- ^ Decoder for 'Request'.
   -> ([lo] -> CBOR.Encoding)                          -- ^ Encoder for reply with list of 'TraceObject's.
   -> (forall s . CBOR.Decoder s [lo])                 -- ^ Decoder for reply with list of 'TraceObject's.
-  -> Codec (TraceForward lo)
+  -> Codec (DataPointForward lo)
            DeserialiseFailure m LBS.ByteString
-codecTraceForward encodeRequest   decodeRequest
+codecDataPointForward encodeRequest   decodeRequest
                   encodeReplyList decodeReplyList =
   mkCodecCborLazyBS encode decode
  where
   -- Encode messages.
   encode
     :: forall (pr  :: PeerRole)
-              (st  :: TraceForward lo)
-              (st' :: TraceForward lo).
+              (st  :: DataPointForward lo)
+              (st' :: DataPointForward lo).
        PeerHasAgency pr st
-    -> Message (TraceForward lo) st st'
+    -> Message (DataPointForward lo) st st'
     -> CBOR.Encoding
 
   encode (ClientAgency TokIdle) (MsgTraceObjectsRequest blocking request) =
@@ -68,7 +68,7 @@ codecTraceForward encodeRequest   decodeRequest
   -- Decode messages
   decode
     :: forall (pr :: PeerRole)
-              (st :: TraceForward lo) s.
+              (st :: DataPointForward lo) s.
        PeerHasAgency pr st
     -> CBOR.Decoder s (SomeMessage st)
   decode stok = do
@@ -97,12 +97,12 @@ codecTraceForward encodeRequest   decodeRequest
             return $ SomeMessage (MsgTraceObjectsReply (NonBlockingReply los))
 
           (TokBlocking, []) ->
-            fail "codecTraceForward: MsgTraceObjectsReply: empty list not permitted"
+            fail "codecDataPointForward: MsgTraceObjectsReply: empty list not permitted"
 
       -- Failures per protocol state
       (_, _, ClientAgency TokIdle) ->
-        fail (printf "codecTraceForward (%s) unexpected key (%d, %d)" (show stok) key len)
+        fail (printf "codecDataPointForward (%s) unexpected key (%d, %d)" (show stok) key len)
       (_, _, ServerAgency (TokBusy TokBlocking)) ->
-        fail (printf "codecTraceForward (%s) unexpected key (%d, %d)" (show stok) key len)
+        fail (printf "codecDataPointForward (%s) unexpected key (%d, %d)" (show stok) key len)
       (_, _, ServerAgency (TokBusy TokNonBlocking)) ->
-        fail (printf "codecTraceForward (%s) unexpected key (%d, %d)" (show stok) key len)
+        fail (printf "codecDataPointForward (%s) unexpected key (%d, %d)" (show stok) key len)

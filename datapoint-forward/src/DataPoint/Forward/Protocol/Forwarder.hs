@@ -5,7 +5,7 @@
 {-# LANGUAGE NamedFieldPuns #-}
 
 module DataPoint.Forward.Protocol.Forwarder
-  ( TraceForwarder (..)
+  ( DataPointForwarder (..)
   , traceForwarderPeer
   ) where
 
@@ -14,13 +14,13 @@ import           Network.TypedProtocol.Core (Peer (..), PeerHasAgency (..),
 
 import           DataPoint.Forward.Protocol.Type
 
-data TraceForwarder lo m a = TraceForwarder
+data DataPointForwarder lo m a = DataPointForwarder
   { -- | The acceptor sent us a request for new 'TraceObject's.
     recvMsgTraceObjectsRequest
       :: forall blocking.
          TokBlockingStyle blocking
       -> NumberOfTraceObjects
-      -> m (BlockingReplyList blocking lo, TraceForwarder lo m a)
+      -> m (BlockingReplyList blocking lo, DataPointForwarder lo m a)
 
     -- | The acceptor terminated. Here we have a pure return value, but we
     -- could have done another action in 'm' if we wanted to.
@@ -31,9 +31,9 @@ data TraceForwarder lo m a = TraceForwarder
 --
 traceForwarderPeer
   :: Monad m
-  => TraceForwarder lo m a
-  -> Peer (TraceForward lo) 'AsServer 'StIdle m a
-traceForwarderPeer TraceForwarder{recvMsgTraceObjectsRequest, recvMsgDone} =
+  => DataPointForwarder lo m a
+  -> Peer (DataPointForward lo) 'AsServer 'StIdle m a
+traceForwarderPeer DataPointForwarder{recvMsgTraceObjectsRequest, recvMsgDone} =
   -- In the 'StIdle' state the forwarder is awaiting a request message
   -- from the acceptor.
   Await (ClientAgency TokIdle) $ \case
