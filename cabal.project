@@ -6,7 +6,7 @@ packages:
     cardano-client-demo
     cardano-config
     cardano-node
-    cardano-node-chairman
+  --  cardano-node-chairman
     cardano-submit-api
     cardano-testnet
     bench/cardano-topology

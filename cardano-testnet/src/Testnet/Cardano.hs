@@ -477,8 +477,9 @@ testnet testnetOptions H.Conf {..} = do
   -- pool-owner1..n: will be the owner of the pools and we'll use their reward
   --                 account for pool rewards
   let userAddrs = ("user" <>) . show @Int <$> userPoolN
-  let poolAddrs = ("pool-owner" <>) . show @Int <$> poolNodesN
-  let addrs = userAddrs <> poolAddrs
+      poolAddrs = ("pool-owner" <>) . show @Int <$> poolNodesN
+      addrs = userAddrs <> poolAddrs
+
 
   H.createDirectoryIfMissing $ tempAbsPath </> "addresses"
 
@@ -493,11 +494,28 @@ testnet testnetOptions H.Conf {..} = do
       , "--signing-key-file", paymentSKey
       ]
 
-    -- Stake address keys
+    void $ H.execCli
+      [ "address", "key-gen"
+      , "--verification-key-file", tempAbsPath </> "shelley/utxo-keys/utxo2.vkey"
+      , "--signing-key-file", tempAbsPath </> "shelley/utxo-keys/utxo2.skey"
+      ]
+
     void $ H.execCli
       [ "stake-address", "key-gen"
       , "--verification-key-file", tempAbsPath </> "addresses/" <> addr <> "-stake.vkey"
       , "--signing-key-file", tempAbsPath </> "addresses/" <> addr <> "-stake.skey"
+      ]
+
+    void $ H.execCli
+      [ "stake-address", "key-gen"
+      , "--verification-key-file", tempAbsPath </> "shelley/utxo-keys/utxo-stake.vkey"
+      , "--signing-key-file", tempAbsPath </> "shelley/utxo-keys/utxo-stake.skey"
+      ]
+
+    void $ H.execCli
+      [ "stake-address", "key-gen"
+      , "--verification-key-file", tempAbsPath </> "shelley/utxo-keys/utxo2-stake.vkey"
+      , "--signing-key-file", tempAbsPath </> "shelley/utxo-keys/utxo2-stake.skey"
       ]
 
     -- Payment addresses

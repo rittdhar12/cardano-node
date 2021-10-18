@@ -102,6 +102,7 @@ test-suite cardano-testnet-tests
 
   build-depends:        aeson
                       , cardano-api
+                      , cardano-cli
                       , cardano-testnet
                       , containers
                       , directory

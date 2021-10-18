@@ -39,7 +39,7 @@ module Cardano.CLI.Shelley.Commands
   , VerificationKeyBase64 (..)
   , GenesisKeyFile (..)
   , MetadataFile (..)
-  , PoolId (..)
+  -- , PoolId (..)
   , PoolMetadataFile (..)
   , PrivKeyFile (..)
   , BlockId (..)
