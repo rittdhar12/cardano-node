@@ -6,6 +6,8 @@ module Cardano.Api.Utils
   , formatParsecError
   , noInlineMaybeToStrictMaybe
   , runParsecParser
+  , hoistEither
+  , hoistEitherWith
   ) where
 
 import           Prelude
@@ -42,3 +44,9 @@ runParsecParser parser input =
   case Parsec.parse (parser <* Parsec.eof) "" (Text.unpack input) of
     Right txin -> pure txin
     Left parseError -> fail $ formatParsecError parseError
+
+hoistEither :: MonadFail m => Either String a -> m a
+hoistEither = either fail pure
+
+hoistEitherWith :: MonadFail m => (e -> String) -> Either e a -> m a
+hoistEitherWith f = either (fail . f) pure

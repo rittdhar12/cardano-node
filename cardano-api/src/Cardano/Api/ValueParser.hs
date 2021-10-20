@@ -123,8 +123,8 @@ policyId :: Parser PolicyId
 policyId = do
   hexText <- many1 hexDigit
   case textToPolicyId hexText of
-    Just p -> pure p
-    Nothing ->
+    Right p -> pure p
+    Left _ ->
       fail $ "expecting a 56 hex-encoded policy ID, but found only "
           ++ show (length hexText) ++ " hex digits"
   where
